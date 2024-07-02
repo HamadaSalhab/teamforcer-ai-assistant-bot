@@ -16,6 +16,7 @@ from docx import Document as DocxDocument
 from pypdf import PdfReader
 import csv
 
+
 def create_index(pinecone_client):
     index_name = 'teamforce-rag'
     existing_indexes = [index_info["name"]
@@ -39,6 +40,7 @@ def create_index(pinecone_client):
 
     return index
 
+
 # Load environment variables
 load_dotenv()
 
@@ -57,7 +59,6 @@ EMBEDDING_MODEL_NAME = "text-embedding-ada-002"
 MAX_MESSAGES = 100
 MAX_TOKENS = 14000  # slightly below the max token limit to be safe
 
-
 # Initialize the tiktoken encoding for the OpenAI model
 encoding = tiktoken.encoding_for_model(MODEL_NAME)
 embeddings_model = OpenAIEmbeddings(model=EMBEDDING_MODEL_NAME)
@@ -72,6 +73,7 @@ messages = [
     HumanMessage(content="Привет, ИИ, как ты сегодня?"),
     AIMessage(content="У меня все отлично, спасибо вам. Чем я могу вам помочь?")
 ]
+
 
 def preprocess(knowledgebase_path='./knowledge-base/KBTF1.xlsx'):
     dataframe = pd.read_excel(knowledgebase_path)
@@ -132,45 +134,18 @@ def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
                      'text': x.iloc[1]} for _, x in batch.iterrows()]
         index.upsert(vectors=zip(ids, embeds, metadata))
 
-def train_textual_data(texts, index, ids):
 
-    embeddings_list = []
-    for text in texts:
-        res = embeddings_model.embed_documents(text)
-        # embeddings_list.append(res['data'][0]['embedding'])
-        embeddings_list.append(res)
+def train_textual_data(data, index):
+    embeddings_model = OpenAIEmbeddings(model="text-embedding-ada-002")
+    for i in tqdm(range(0, len(data))):
+        embeds = embeddings_model.embed_documents(data)
+        metadata = [{'text': data[i]}]
+        index.upsert(vectors=zip(f"{i}", embeds, metadata))
 
-    index.upsert(vectors=[(id, embedding)
-                 for id, embedding in zip(ids, embeddings_list)])
+    vectorstore = PineconeVectorStore(
+        index=index, embedding=embeddings_model, text_key="text")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    button_start = KeyboardButton('/start')
-    button_help = KeyboardButton('/help')
-    keyboard = ReplyKeyboardMarkup(
-        [[button_start, button_help]], resize_keyboard=True)
-    await update.message.reply_text(
-        'Привет! Я ТимФорсер. Чем могу помочь?',
-        reply_markup=keyboard
-    )
-
-
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    global messages
-    user_input = update.message.text
-    if user_input.startswith("/upd"):
-        train_textual_data(user_input[4:].split("."), index, ["text-from-message"])
-    else: 
-        answer, messages = get_answer(user_input, chat, vectorstore, messages)
-        await update.message.reply_text(answer)
-
-
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    help_text = """Меня зовут ТимФорсер, я цифровой ассистент на базе искусственного интеллекта и член команды ТИМФОРС. Я всегда готов ответить на ваши вопросы, используя коллективную базу знаний. Присоединяйтесь и делитесь своими знаниями с командой.
-
-В одиночку можно сделать так мало – вместе можно сделать так много"""
-
-    await update.message.reply_text(help_text)
-
+    return vectorstore
 
 # Updating the vectorstore
 async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -237,22 +212,62 @@ def update_knowledge_base(file_path):
     elif file_path.endswith('.docx'):
         texts = read_docx(file_path)
         # Разбиваем текст на строки и создаем датафрейм
-        train_textual_data(texts, index, [file_path])
+        train_textual_data(texts, index)
     elif file_path.endswith('.pdf'):
         texts = read_pdf(file_path)
         # Разбиваем текст на строки и создаем датафрейм
-        train_textual_data(texts, index, [file_path])
+        train_textual_data(texts, index)
     else:
         print("Неизвестный формат файла")
         return
 
-    print(f"Новые данные: {new_data}")  # Дополнительный вывод для отладки
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    button_start = KeyboardButton('/start')
+    button_help = KeyboardButton('/help')
+    keyboard = ReplyKeyboardMarkup(
+        [[button_start, button_help]], resize_keyboard=True)
+    await update.message.reply_text(
+        'Привет! Я ТимФорсер. Чем могу помочь?',
+        reply_markup=keyboard
+    )
+
+
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    global messages
+    user_input = update.message.text
+    print(f"received: {user_input}")
+    answer, messages = get_answer(user_input, chat, vectorstore, messages)
+    await update.message.reply_text(answer)
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    help_text = """Меня зовут ТимФорсер, я цифровой ассистент на базе искусственного интеллекта и член команды ТИМФОРС. Я всегда готов ответить на ваши вопросы, используя коллективную базу знаний. Присоединяйтесь и делитесь своими знаниями с командой.
+
+В одиночку можно сделать так мало – вместе можно сделать так много"""
+
+    await update.message.reply_text(help_text)
+
+# New handler for the /upd command
+
+
+async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    global index
+    user_input = update.message.text
+    print("Updating with text info...")
+    await update.message.reply_text('Обновление получено. Обновление базы знаний...')
+    train_textual_data(user_input[4:].split("."), index)
+    await update.message.reply_text('База знаний успешно обновлена!')
 
 
 app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help_command))
+# Handler for /upd command
+app.add_handler(CommandHandler("upd", update_command))
+# Handler for /ask command
+app.add_handler(CommandHandler("ask", echo))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 # Обработчик для получения файлов
 app.add_handler(MessageHandler(filters.Document.ALL, save_file))
