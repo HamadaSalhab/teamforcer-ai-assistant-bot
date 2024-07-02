@@ -104,7 +104,7 @@ def count_tokens(messages):
     return total_tokens
 
 
-def get_answer(query: str, chat, vectorstore, messages):
+def get_answer(query: str, chat, vectorstore, messages: list):
     augmented_prompt = augment_prompt(query, vectorstore)
     messages.append(HumanMessage(content=augmented_prompt))
 
@@ -119,7 +119,8 @@ def get_answer(query: str, chat, vectorstore, messages):
     res = chat.invoke(messages)
     # messages.append(res)
 
-    messages.pop()
+    while len(messages) > 1:
+        messages.pop()
 
     return res.content, messages
 
