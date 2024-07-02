@@ -2,3 +2,4 @@
 knowledge-base
 .env
 .DS_Store
+/uploaded_files
