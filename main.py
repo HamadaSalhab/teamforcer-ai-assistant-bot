@@ -106,7 +106,7 @@ def count_tokens(messages):
 
 def get_answer(query: str, chat, vectorstore, messages):
     augmented_prompt = augment_prompt(query, vectorstore)
-    # messages.append(HumanMessage(content=augmented_prompt))
+    messages.append(HumanMessage(content=augmented_prompt))
 
     while count_tokens(messages) > MAX_TOKENS:
         # Remove the oldest human-AI message pair
@@ -118,6 +118,8 @@ def get_answer(query: str, chat, vectorstore, messages):
 
     res = chat.invoke(messages)
     # messages.append(res)
+
+    messages.pop()
 
     return res.content, messages
 
