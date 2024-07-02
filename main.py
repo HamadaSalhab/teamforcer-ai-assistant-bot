@@ -117,7 +117,7 @@ def get_answer(query: str, chat, vectorstore, messages):
             break
 
     res = chat.invoke(messages)
-    messages.append(res)
+    # messages.append(res)
 
     return res.content, messages
 
@@ -245,6 +245,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if in_group_not_tagged(update, context):
         return
 
+
+
     global messages
     user_input = update.message.text
     if update.message.chat.type in ['group', 'supergroup']:
@@ -274,6 +276,7 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     print("Updating with text info...")
     await update.message.reply_text('Обновление получено. Обновление базы знаний...')
     train_textual_data(user_input[4:].split("."), index)
+    await update.message
     await update.message.reply_text('База знаний успешно обновлена!')
 
 
