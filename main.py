@@ -222,6 +222,12 @@ def update_knowledge_base(file_path):
         return
 
 
+def in_group_not_tagged(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    if update.message.chat.type in ['group', 'supergroup']:
+        if f'@{context.bot.username}' not in update.message.text:
+            return True
+    return False
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     button_start = KeyboardButton('/start')
     button_help = KeyboardButton('/help')
@@ -234,9 +240,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Ignore the message if the bot is in a group but not tagged
+    if in_group_not_tagged(update, context):
+        return
+
     global messages
     user_input = update.message.text
-    print(f"received: {user_input}")
+    if update.message.chat.type in ['group', 'supergroup']:
+        if f'@{context.bot.username}' not in user_input:
+            return
     answer, messages = get_answer(user_input, chat, vectorstore, messages)
     await update.message.reply_text(answer)
 
@@ -248,10 +260,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     await update.message.reply_text(help_text)
 
-# New handler for the /upd command
-
-
 async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Ignore the message if the bot is in a group but not tagged
+    if in_group_not_tagged(update, context):
+            return
+    
     global index
     user_input = update.message.text
     print("Updating with text info...")
