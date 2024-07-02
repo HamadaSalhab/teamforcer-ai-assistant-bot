@@ -1,4 +1,5 @@
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram.constants import ChatAction
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 from datasets import Dataset
 from pinecone import ServerlessSpec, Pinecone
@@ -249,6 +250,9 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.chat.type in ['group', 'supergroup']:
         if f'@{context.bot.username}' not in user_input:
             return
+        
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+
     answer, messages = get_answer(user_input, chat, vectorstore, messages)
     await update.message.reply_text(answer)
 
