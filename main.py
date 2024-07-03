@@ -148,19 +148,13 @@ def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
         index.upsert(vectors=zip(ids, embeds, metadata))
 
 
-def preprocess_text(text):
-    # Пример предварительной обработки текста
-    text = text.replace('\n', ' ').strip()
-    return text
 
-
-def train_textual_data(data, index):
+def train_textual_data(text: str, index):
     embeddings_model = OpenAIEmbeddings(model="text-embedding-ada-002")
-    processed_texts = [preprocess_text(text) for text in data]
-    for i in tqdm(range(0, len(processed_texts))):
-        embeds = embeddings_model.embed_documents([processed_texts[i]])
-        metadata = [{'text': processed_texts[i]}]
-        index.upsert(vectors=zip([str(i)], embeds, metadata))
+
+    embeds = embeddings_model.embed_documents([text])
+    metadata = [{'text': text}]
+    index.upsert(vectors=zip([str(0)], embeds, metadata))
 
     vectorstore = PineconeVectorStore(
         index=index, embedding=embeddings_model, text_key="text")
@@ -227,7 +221,7 @@ def read_pdf(file_path):
         text = page.extract_text()
         if text:
             full_text.append(text)
-    return full_text
+    return "\n".join(full_text)
 
 
 async def update_knowledge_base(file_path):
