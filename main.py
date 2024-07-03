@@ -240,7 +240,7 @@ async def update_knowledge_base(file_path):
         new_data.iloc[:, 1] = new_data.iloc[:, 1].astype(str)
         train_tabular_data(new_data, index)
     elif file_path.endswith('.docx'):
-        texts = await read_docx(file_path)
+        texts = read_docx(file_path)
         # Разбиваем текст на строки и создаем датафрейм
         train_textual_data(texts, index)
     elif file_path.endswith('.pdf'):
