@@ -128,8 +128,7 @@ def get_answer(query: str, chat, vectorstore, messages: List[str]):
     res = chat.invoke(messages)
     # messages.append(res)
 
-    while len(messages) > 1:
-        messages.pop()
+    messages.pop()
 
     return res.content, messages
 
