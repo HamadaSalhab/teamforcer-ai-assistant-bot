@@ -188,7 +188,7 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             os.makedirs(UPLOAD_FOLDER)
 
         if os.path.exists(file_path):
-            if len(file_path.split(".")) > 2:
+            if len(file_path.split(".")) > 3:
                 print("Unsupported format!")
                 return
             path, extension = file_path.split(".")
