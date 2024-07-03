@@ -1,53 +1,21 @@
-from dotenv import load_dotenv
-from pypdf import PdfReader
-from langchain.schema import SystemMessage, HumanMessage, AIMessage
-from langchain_pinecone import PineconeVectorStore
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from tqdm.auto import tqdm
-from pinecone import ServerlessSpec, Pinecone
-from datasets import Dataset
-import aiofiles
-import asyncio
-import csv
-import pandas as pd
-import tiktoken
-import logging
-import time
-import os
-import io
-from docx import Document
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.constants import ChatAction
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
-import nest_asyncio
-from typing import List
-
-nest_asyncio.apply()
-
-
-# Load environment variables
-load_dotenv()
-
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-UPLOAD_FOLDER = './uploaded_files/'
-MODEL_NAME = "gpt-4-turbo-2024-04-09"
-
-EMBEDDING_MODEL_NAME = "text-embedding-ada-002"
-
-MAX_MESSAGES = 100
-MAX_TOKENS = 14000  # slightly below the max token limit to be safe
-
-# Initialize the tiktoken encoding for the OpenAI model
-encoding = tiktoken.encoding_for_model(MODEL_NAME)
-embeddings_model = OpenAIEmbeddings(model=EMBEDDING_MODEL_NAME)
-chat = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model=MODEL_NAME)
-pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
+from datasets import Dataset
+from pinecone import ServerlessSpec, Pinecone
+from tqdm.auto import tqdm
+import pandas as pd
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_pinecone import PineconeVectorStore
+from langchain.schema import SystemMessage, HumanMessage, AIMessage
+import os
+import time
+from dotenv import load_dotenv
+import logging
+import tiktoken
+from docx import Document as DocxDocument
+from pypdf import PdfReader
+import csv
 
 
 def create_index(pinecone_client):
@@ -74,18 +42,41 @@ def create_index(pinecone_client):
     return index
 
 
+# Load environment variables
+load_dotenv()
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+UPLOAD_FOLDER = './uploaded_files/'
+MODEL_NAME = "gpt-4-turbo-2024-04-09"
+
+EMBEDDING_MODEL_NAME = "text-embedding-ada-002"
+
+MAX_MESSAGES = 100
+MAX_TOKENS = 14000  # slightly below the max token limit to be safe
+
+# Initialize the tiktoken encoding for the OpenAI model
+encoding = tiktoken.encoding_for_model(MODEL_NAME)
+embeddings_model = OpenAIEmbeddings(model=EMBEDDING_MODEL_NAME)
+chat = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model=MODEL_NAME)
+pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
 index = create_index(pinecone_client)
 vectorstore = PineconeVectorStore(
     index=index, embedding=embeddings_model, text_key="text")
 
 messages = [
-    SystemMessage(content="Вы - полезный ассистент, хорошо разбирающийся в простых вопросах из разных профессиональных сфер. Ваша аудитория - обычные пользователи, имеющие небольшой контекст во всех профессиональных сферах. Стремитесь к тому, чтобы уровень чтения по Флешу составил 80 баллов или выше. Используйте активный залог и избегайте наречий. Избегайте сложных терминов и используйте простой язык. Избегайте навязчивости или чрезмерного энтузиазма, вместо этого выражайте спокойную уверенность. Отвечайте кратко и структурировано. Если у вас нет контекста про аббревиатуру, не придумывайте её расшифровку."),
+    SystemMessage(content="Вы - полезный ассистент, хорошо разбирающийся в простых вопросах из разных профессиональных сфер. Ваша аудитория - обычные пользователи, имеющие небольшой контекст во всех профессиональных сферах. Стремитесь к тому, чтобы уровень чтения по Флешу составил 80 баллов или выше. Используйте активный залог и избегайте наречий. Избегайте сложных терминов и используйте простой язык. Избегайте навязчивости или чрезмерного энтузиазма, вместо этого выражайте спокойную уверенность. Отвечайте кратко и структурировано."),
     HumanMessage(content="Привет, ИИ, как ты сегодня?"),
     AIMessage(content="У меня все отлично, спасибо вам. Чем я могу вам помочь?")
 ]
 
 
-def preprocess(knowledgebase_path='/content/KBTF1.xlsx'):
+def preprocess(knowledgebase_path='./knowledge-base/KBTF1.xlsx'):
     dataframe = pd.read_excel(knowledgebase_path)
     dataframe.iloc[:, 1] = dataframe.iloc[:, 1].astype(str)
     dataset_tf = Dataset.from_pandas(dataframe)
@@ -113,22 +104,23 @@ def count_tokens(messages):
     return total_tokens
 
 
-def get_answer(query: str, chat, vectorstore, messages: List[str]):
+def get_answer(query: str, chat, vectorstore, messages):
     augmented_prompt = augment_prompt(query, vectorstore)
     messages.append(HumanMessage(content=augmented_prompt))
 
-    while count_tokens(messages) > MAX_TOKENS:
-        # Remove the oldest human-AI message pair
-        if len(messages) > 3:  # Keep the initial SystemMessage and at least one exchange
-            messages.pop(1)
-            messages.pop(1)
-        else:
-            break
+    # while count_tokens(messages) > MAX_TOKENS:
+    #     # Remove the oldest human-AI message pair
+    #     if len(messages) > 3:  # Keep the initial SystemMessage and at least one exchange
+    #         messages.pop(1)
+    #         messages.pop(1)
+    #     else:
+    #         break
 
     res = chat.invoke(messages)
     # messages.append(res)
 
-    messages.pop()
+    while len(messages)>1:
+        messages.pop()
 
     return res.content, messages
 
@@ -147,34 +139,19 @@ def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
         index.upsert(vectors=zip(ids, embeds, metadata))
 
 
-def preprocess_text(text):
-    # Пример предварительной обработки текста
-    text = text.replace('\n', ' ').strip()
-    return text
-
-
 def train_textual_data(data, index):
     embeddings_model = OpenAIEmbeddings(model="text-embedding-ada-002")
-    processed_texts = [preprocess_text(text) for text in data]
-    for i in tqdm(range(0, len(processed_texts))):
-        embeds = embeddings_model.embed_documents([processed_texts[i]])
-        metadata = [{'text': processed_texts[i]}]
-        index.upsert(vectors=zip([str(i)], embeds, metadata))
+    for i in tqdm(range(0, len(data))):
+        embeds = embeddings_model.embed_documents(data)
+        metadata = [{'text': data[i]}]
+        index.upsert(vectors=zip(f"{i}", embeds, metadata))
 
     vectorstore = PineconeVectorStore(
         index=index, embedding=embeddings_model, text_key="text")
 
     return vectorstore
 
-
-async def read_docx_async(file_path):
-    async with aiofiles.open(file_path, mode='rb') as f:
-        content = await f.read()
-    doc = Document(io.BytesIO(content))
-    full_text = []
-    for para in doc.paragraphs:
-        full_text.append(para.text)
-    return full_text
+# Updating the vectorstore
 
 
 async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -203,8 +180,16 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(f'Ошибка при сохранении файла {file_path}')
 
         # Обновляем базу знаний после загрузки файла
-        await update_knowledge_base(file_path)
+        update_knowledge_base(file_path)
         await update.message.reply_text('База знаний успешно обновлена!')
+
+
+def read_docx(file_path):
+    doc = DocxDocument(file_path)
+    full_text = ""
+    for paragraph in doc.paragraphs:
+        full_text += "\n" + paragraph
+    return full_text
 
 
 def read_pdf(file_path):
@@ -217,17 +202,21 @@ def read_pdf(file_path):
     return full_text
 
 
-async def update_knowledge_base(file_path):
+def update_knowledge_base(file_path):
     global index
     # Обработка файла и обновление датасета
-    if file_path.endswith('.xlsx') or file_path.endswith('.csv'):
-        new_data = pd.read_excel(file_path) if file_path.endswith('xlsx') else pd.read_csv(file_path, sep=',',
-                                                                                           quoting=csv.QUOTE_ALL,
-                                                                                           quotechar='"')
+    if file_path.endswith(('.xlsx', 'csv')):
+        new_data = pd.read_excel(file_path) if file_path.endswith(
+            'xlsx') else pd.read_csv(file_path, sep=',',
+                                     quoting=csv.QUOTE_ALL,
+                                     quotechar='"')
+
         new_data.iloc[:, 1] = new_data.iloc[:, 1].astype(str)
+
         train_tabular_data(new_data, index)
+
     elif file_path.endswith('.docx'):
-        texts = await read_docx_async(file_path)
+        texts = read_docx(file_path)
         # Разбиваем текст на строки и создаем датафрейм
         train_textual_data(texts, index)
     elif file_path.endswith('.pdf'):
@@ -261,12 +250,13 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
         return
+
     global messages
     user_input = update.message.text
     if update.message.chat.type in ['group', 'supergroup']:
         if f'@{context.bot.username}' not in user_input:
             return
-        
+
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
     answer, messages = get_answer(user_input, chat, vectorstore, messages)
@@ -274,9 +264,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    help_text = """Меня зовут ТимФорсер, я цифровой ассистент на базе искусственного интеллекта и член команды ТИМФОРС.
-
-Я всегда готов ответить на ваши вопросы, используя коллективную базу знаний. Присоединяйтесь и делитесь своими знаниями с командой.
+    help_text = """Меня зовут ТимФорсер, я цифровой ассистент на базе искусственного интеллекта и член команды ТИМФОРС. Я всегда готов ответить на ваши вопросы, используя коллективную базу знаний. Присоединяйтесь и делитесь своими знаниями с командой.
 
 В одиночку можно сделать так мало – вместе можно сделать так много"""
 
@@ -292,15 +280,10 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     user_input = update.message.text
     print("Updating with text info...")
     await update.message.reply_text('Обновление получено. Обновление базы знаний...')
-    # Remove the "+" from the message before processing
-    train_textual_data(user_input[1:].split("."), index)
+    train_textual_data(user_input[4:].split("."), index)
+    await update.message
     await update.message.reply_text('База знаний успешно обновлена!')
 
-# Новый обработчик для сообщения "+"
-async def update_plus_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Проверяем, что сообщение начинается с "+"
-    if update.message.text.startswith("+"):
-        await update_command(update, context)
 
 app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
@@ -313,16 +296,5 @@ app.add_handler(CommandHandler("ask", echo))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 # Обработчик для получения файлов
 app.add_handler(MessageHandler(filters.Document.ALL, save_file))
-# Новый обработчик для "+"
-app.add_handler(MessageHandler(
-    filters.TEXT & filters.Regex(r'^\+.*'), update_plus_command))
 
-# Запуск бота с использованием asyncio
-if __name__ == "__main__":
-    async def main():
-        await app.initialize()
-        await app.start()
-        await app.updater.start_polling()
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+app.run_polling(close_loop=False)
