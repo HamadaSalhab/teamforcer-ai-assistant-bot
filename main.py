@@ -185,6 +185,9 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not os.path.exists(UPLOAD_FOLDER):
             os.makedirs(UPLOAD_FOLDER)
 
+        if os.path.exists(file_path):
+            print("")
+
         await file.download_to_drive(file_path)
 
         # Проверка, что файл сохранен
@@ -201,7 +204,7 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def read_docx(file_path):
-    doc = DocxDocument(file_path)
+    doc = Document(file_path)
     full_text = ""
     for paragraph in doc.paragraphs:
         full_text += "\n" + paragraph
@@ -228,7 +231,7 @@ async def update_knowledge_base(file_path):
         new_data.iloc[:, 1] = new_data.iloc[:, 1].astype(str)
         train_tabular_data(new_data, index)
     elif file_path.endswith('.docx'):
-        texts = await read_docx_async(file_path)
+        texts = await read_docx(file_path)
         # Разбиваем текст на строки и создаем датафрейм
         train_textual_data(texts, index)
     elif file_path.endswith('.pdf'):
