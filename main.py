@@ -186,7 +186,13 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             os.makedirs(UPLOAD_FOLDER)
 
         if os.path.exists(file_path):
-            print("")
+            if len(file_path.split(".")) > 2:
+                print("Unsupported format!")
+                return
+            path, extension = file_path.split(".")
+            path+="_copy"
+            file_path = path+extension
+            print(f"A similar file with the same name was found. Changing to {file_path}")
 
         await file.download_to_drive(file_path)
 
@@ -207,7 +213,7 @@ def read_docx(file_path):
     doc = Document(file_path)
     full_text = ""
     for paragraph in doc.paragraphs:
-        full_text += "\n" + paragraph
+        full_text += "\n" + paragraph.text
     return full_text
 
 
