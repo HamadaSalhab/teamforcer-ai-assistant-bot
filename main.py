@@ -298,14 +298,12 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if in_group_not_tagged(update, context):
         return
 
-        return
-
     global index
     user_input = update.message.text
     print("Updating with text info...")
     await update.message.reply_text('Обновление получено. Обновление базы знаний...')
     # Remove the "+" from the message before processing
-    train_textual_data(user_input[1:].split("."), index)
+    train_textual_data(user_input[1:], index)
     await update.message.reply_text('База знаний успешно обновлена!')
 
 # Новый обработчик для сообщения "+"
