@@ -171,15 +171,17 @@ def train_textual_data(data, index):
 
 
 async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    file_name = update.message.document.file_name
+    print(f"Received file: {file_name}")
     if update.message.document:
         # Проверяем формат файла
-        if not update.message.document.file_name.endswith(('.docx', '.pdf', '.xlsx', 'csv')):
+        if not file_name.endswith(('.docx', '.pdf', '.xlsx', 'csv')):
             await update.message.reply_text('Пожалуйста, загрузите файл формата .docx, .pdf, .xlsx, или .csv.')
             return
 
         file = await update.message.document.get_file()
         file_path = os.path.join(
-            UPLOAD_FOLDER, update.message.document.file_name)
+            UPLOAD_FOLDER, file_name)
 
         # Убедимся, что папка существует
         if not os.path.exists(UPLOAD_FOLDER):
