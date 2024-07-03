@@ -191,9 +191,10 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if len(file_path.split(".")) > 3:
                 print("Unsupported format!")
                 return
-            path, extension = file_path.split(".")
-            path+="_copy"
-            file_path = path+extension
+            splits = file_path.split(".")
+            path, extension = ".".join(splits[:-1]), splits[-1]
+            path += "_copy"
+            file_path = path + "." + extension
             print(f"A similar file with the same name was found. Changing to {file_path}")
 
         await file.download_to_drive(file_path)
