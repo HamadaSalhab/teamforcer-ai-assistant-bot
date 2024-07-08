@@ -24,7 +24,6 @@ from typing import List
 
 nest_asyncio.apply()
 
-
 # Load environment variables
 load_dotenv()
 
@@ -37,11 +36,9 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 UPLOAD_FOLDER = './uploaded_files/'
 MODEL_NAME = "gpt-4-turbo-2024-04-09"
-
 EMBEDDING_MODEL_NAME = "text-embedding-ada-002"
-
 MAX_MESSAGES = 100
-MAX_TOKENS = 14000  # slightly below the max token limit to be safe
+MAX_TOKENS = 14000
 
 # Initialize the tiktoken encoding for the OpenAI model
 encoding = tiktoken.encoding_for_model(MODEL_NAME)
@@ -128,7 +125,7 @@ def get_answer(query: str, chat, vectorstore, messages: List[str]):
     res = chat.invoke(messages)
     # messages.append(res)
 
-    while len(messages)>1:
+    while len(messages) > 1:
         messages.pop()
 
     return res.content, messages
@@ -148,7 +145,6 @@ def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
         index.upsert(vectors=zip(ids, embeds, metadata))
 
 
-
 def train_textual_data(text: str, index):
     embeddings_model = OpenAIEmbeddings(model="text-embedding-ada-002")
 
@@ -160,8 +156,6 @@ def train_textual_data(text: str, index):
         index=index, embedding=embeddings_model, text_key="text")
 
     return vectorstore
-
-# Updating the vectorstore
 
 
 async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -189,7 +183,8 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             path, extension = ".".join(splits[:-1]), splits[-1]
             path += "_copy"
             file_path = path + "." + extension
-            print(f"A similar file with the same name was found. Changing to {file_path}")
+            print(f"A similar file with the same name was found. Changing to {
+                  file_path}")
 
         await file.download_to_drive(file_path)
 
@@ -253,7 +248,6 @@ def in_group_not_tagged(update: Update, context: ContextTypes.DEFAULT_TYPE) -> b
     return False
 
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     button_start = KeyboardButton('/start')
     button_help = KeyboardButton('/help')
@@ -292,7 +286,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(help_text)
 
 
-
 async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
@@ -306,7 +299,7 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     train_textual_data(user_input[1:], index)
     await update.message.reply_text('База знаний успешно обновлена!')
 
-# Новый обработчик для сообщения "+"
+
 async def update_plus_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Проверяем, что сообщение начинается с "+"
     if update.message.text.startswith("+"):
