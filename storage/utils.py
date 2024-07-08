@@ -4,22 +4,29 @@ from docx import Document
 from telegram import Update
 from telegram.ext import ContextTypes
 from config import UPLOAD_FOLDER
+from storage.updaters import update_knowledge_base
 
 
 async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Saves the uploaded file to the server and updates the knowledge base.
+
+    Args:
+        update (Update): The update object containing the message.
+        context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
+    """
     file_name = update.message.document.file_name
     print(f"Received file: {file_name}")
     if update.message.document:
-        # Проверяем формат файла
+        # Check file format
         if not file_name.endswith(('.docx', '.pdf', '.xlsx', 'csv')):
             await update.message.reply_text('Пожалуйста, загрузите файл формата .docx, .pdf, .xlsx, или .csv.')
             return
 
         file = await update.message.document.get_file()
-        file_path = os.path.join(
-            UPLOAD_FOLDER, file_name)
+        file_path = os.path.join(UPLOAD_FOLDER, file_name)
 
-        # Убедимся, что папка существует
+        # Ensure the upload folder exists
         if not os.path.exists(UPLOAD_FOLDER):
             os.makedirs(UPLOAD_FOLDER)
 
@@ -36,7 +43,7 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await file.download_to_drive(file_path)
 
-        # Проверка, что файл сохранен
+        # Check if the file was saved
         if os.path.exists(file_path):
             print(f"Файл сохранен как {file_path}")
             await update.message.reply_text(f'Файл сохранен. Обновление базы знаний...')
@@ -44,12 +51,21 @@ async def save_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             print(f"Ошибка при сохранении файла {file_path}")
             await update.message.reply_text(f'Ошибка при сохранении файла {file_path}')
 
-        # Обновляем базу знаний после загрузки файла
+        # Update the knowledge base after file upload
         await update_knowledge_base(file_path)
         await update.message.reply_text('База знаний успешно обновлена!')
 
 
 def read_docx(file_path):
+    """
+    Reads the content of a .docx file.
+
+    Args:
+        file_path (str): The path to the .docx file.
+
+    Returns:
+        str: The content of the .docx file.
+    """
     doc = Document(file_path)
     full_text = ""
     for paragraph in doc.paragraphs:
@@ -58,6 +74,15 @@ def read_docx(file_path):
 
 
 def read_pdf(file_path):
+    """
+    Reads the content of a .pdf file.
+
+    Args:
+        file_path (str): The path to the .pdf file.
+
+    Returns:
+        str: The content of the .pdf file.
+    """
     reader = PdfReader(file_path)
     full_text = []
     for page in reader.pages:

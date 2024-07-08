@@ -1,8 +1,6 @@
-from pinecone import Pinecone
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ChatAction
-from config import PINECONE_API_KEY
 from model.chat_model import get_answer, get_chat_model
 from storage.database import get_index, get_messages, get_vectorstore
 from storage.trainers import train_textual_data
@@ -12,12 +10,20 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handler for echoing messages. Processes user input and generates a response.
+    
+    Args:s
+        update (Update): The update object containing the message.
+        context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
+    """
     index = get_index()
     vectorstore = get_vectorstore(index)
     chat = get_chat_model()
     messages = get_messages()
-    
+
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
         return
@@ -34,6 +40,13 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handler for the /upd command. Updates the knowledge base with new information.
+    
+    Args:
+        update (Update): The update object containing the message.
+        context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
+    """
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
         return
@@ -47,6 +60,13 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def update_plus_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handler for messages starting with "+". Updates the knowledge base with new information.
+    
+    Args:
+        update (Update): The update object containing the message.
+        context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
+    """
     # Проверяем, что сообщение начинается с "+"
     if update.message.text.startswith("+"):
         await update_command(update, context)
