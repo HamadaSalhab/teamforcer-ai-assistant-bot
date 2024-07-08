@@ -6,8 +6,6 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from tqdm.auto import tqdm
 from pinecone import ServerlessSpec, Pinecone
 from datasets import Dataset
-import aiofiles
-import asyncio
 import csv
 import pandas as pd
 import tiktoken
