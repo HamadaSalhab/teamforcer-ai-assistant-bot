@@ -4,3 +4,4 @@ knowledge-base
 .DS_Store
 /uploaded_files
 draft.py
+__pycache__
