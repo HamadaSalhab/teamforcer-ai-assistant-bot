@@ -92,7 +92,7 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         file = await update.message.document.get_file()
-        file_path = get_received_file_path()
+        file_path = get_received_file_path(file_name)
 
         await file.download_to_drive(file_path)
 

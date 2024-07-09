@@ -5,7 +5,7 @@ from config import UPLOAD_FOLDER
 
 
 def get_received_file_path(filename: str):
-    os.path.join(UPLOAD_FOLDER, filename)
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
 
     # Ensure the upload folder exists
     if not os.path.exists(UPLOAD_FOLDER):
@@ -15,6 +15,8 @@ def get_received_file_path(filename: str):
         file_path = change_duplicate_filename(file_path)
         print(f"A similar file with the same name was found. Changing to {
             file_path}")
+        
+    return file_path
 
 
 def change_duplicate_filename(file_path: str):
@@ -24,6 +26,8 @@ def change_duplicate_filename(file_path: str):
     path, extension = ".".join(splits[:-1]), splits[-1]
     path += "_copy"
     file_path = path + "." + extension
+
+    return file_path
 
 
 def read_docx(file_path):
