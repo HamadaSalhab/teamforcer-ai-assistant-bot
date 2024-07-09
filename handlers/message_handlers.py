@@ -1,9 +1,12 @@
+import os
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ChatAction
 from model.chat_model import get_answer, get_chat_model
 from storage.database import get_index, get_messages, get_vectorstore
 from storage.trainers import train_textual_data
+from storage.updaters import update_knowledge_base
+from storage.utils import get_received_file_path
 from .utils import in_group_not_tagged
 import logging
 
@@ -14,7 +17,7 @@ logger = logging.getLogger(__name__)
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handler for echoing messages. Processes user input and generates a response.
-    
+
     Args:s
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
@@ -42,7 +45,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handler for the /upd command. Updates the knowledge base with new information.
-    
+
     Args:
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
@@ -62,7 +65,7 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 async def update_plus_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handler for messages starting with "+". Updates the knowledge base with new information.
-    
+
     Args:
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
@@ -70,3 +73,37 @@ async def update_plus_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     # Проверяем, что сообщение начинается с "+"
     if update.message.text.startswith("+"):
         await update_command(update, context)
+
+
+async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Saves the uploaded file to the server and updates the knowledge base.
+
+    Args:
+        update (Update): The update object containing the message.
+        context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
+    """
+    file_name = update.message.document.file_name
+    print(f"Received file: {file_name}")
+    if update.message.document:
+        # Check file format
+        if not file_name.endswith(('.docx', '.pdf', '.xlsx', 'csv')):
+            await update.message.reply_text('Пожалуйста, загрузите файл формата .docx, .pdf, .xlsx, или .csv.')
+            return
+
+        file = await update.message.document.get_file()
+        file_path = get_received_file_path()
+
+        await file.download_to_drive(file_path)
+
+        # Check if the file was saved
+        if os.path.exists(file_path):
+            print(f"Файл сохранен как {file_path}")
+            await update.message.reply_text(f'Файл сохранен. Обновление базы знаний...')
+        else:
+            print(f"Ошибка при сохранении файла {file_path}")
+            await update.message.reply_text(f'Ошибка при сохранении файла {file_path}')
+
+        # Update the knowledge base after file upload
+        await update_knowledge_base(file_path)
+        await update.message.reply_text('База знаний успешно обновлена!')

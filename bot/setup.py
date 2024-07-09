@@ -1,6 +1,5 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
-from storage.utils import save_file
-from handlers.message_handlers import echo, update_command
+from handlers.message_handlers import echo, update_command, update_with_file
 from handlers.command_handlers import start, help_command
 from config import TELEGRAM_BOT_TOKEN
 
@@ -23,6 +22,6 @@ def setup_telegram_bot():
 
     # Register message handlers
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-    bot.add_handler(MessageHandler(filters.Document.ALL, save_file))
+    bot.add_handler(MessageHandler(filters.Document.ALL, update_with_file))
 
     return bot
