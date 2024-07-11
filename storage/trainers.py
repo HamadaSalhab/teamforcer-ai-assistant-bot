@@ -1,5 +1,6 @@
+import time
 import pandas as pd
-import tqdm
+from tqdm import tqdm
 from model.embeddings import get_embeddings_model
 
 # Initialize the embeddings model
@@ -18,7 +19,8 @@ def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
     for i in tqdm(range(0, len(data), batch_size)):
         i_end = min(len(data), i + batch_size)
         batch = data.iloc[i:i_end]
-        ids = [f"{index}" for index in batch.index]
+        # Generate unique IDs using timestamp and the index within the batch
+        ids = [f"vector-{int(time.time() * 1000)}-{idx}" for idx in batch.index]
         texts = batch.iloc[:, 0].values  # questions
         # Embedding the questions
         embeds = embeddings_model.embed_documents(texts)
@@ -26,7 +28,6 @@ def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
         metadata = [{'question': x.iloc[0], 'answer': x.iloc[1],
                      'text': x.iloc[1]} for _, x in batch.iterrows()]
         index.upsert(vectors=zip(ids, embeds, metadata))
-
 
 def train_textual_data(text: str, index):
     """
@@ -36,6 +37,7 @@ def train_textual_data(text: str, index):
         text (str): The text data to embed and upload.
         index: The Pinecone index to update.
     """
+    vector_id = f"vector-{int(time.time() * 1000)}"
     embeds = embeddings_model.embed_documents([text])
     metadata = [{'text': text}]
-    index.upsert(vectors=zip([str(0)], embeds, metadata))
+    index.upsert(vectors=zip([vector_id], embeds, metadata))
