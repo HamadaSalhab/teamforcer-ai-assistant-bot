@@ -4,6 +4,8 @@ from pinecone import ServerlessSpec, Pinecone
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
 from config import PINECONE_API_KEY
 from model.embeddings import get_embeddings_model
+from config import INDEX_NAME
+
 
 # Default messages to initialize the bot conversation
 messages = [
@@ -21,22 +23,21 @@ def get_index():
         index: The initialized Pinecone index.
     """
     pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
-    index_name = 'teamforce-rag'
     existing_indexes = [index_info["name"]
                         for index_info in pinecone_client.list_indexes()]
     spec = ServerlessSpec(cloud="aws", region="us-east-1")
 
-    if index_name not in existing_indexes:
+    if INDEX_NAME not in existing_indexes:
         pinecone_client.create_index(
-            index_name,
+            INDEX_NAME,
             dimension=1536,
             metric='dotproduct',
             spec=spec
         )
-        while not pinecone_client.describe_index(index_name).status['ready']:
+        while not pinecone_client.describe_index(INDEX_NAME).status['ready']:
             time.sleep(1)
 
-    index = pinecone_client.Index(index_name)
+    index = pinecone_client.Index(INDEX_NAME)
     time.sleep(1)
     index.describe_index_stats()
 

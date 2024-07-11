@@ -79,6 +79,7 @@ teamforcer-ai-assistant-bot/
     OPENAI_API_KEY=your_openai_api_key
     EMBEDDING_MODEL_NAME=text-embedding-ada-002
     UPLOAD_FOLDER=./uploaded_files/
+    INDEX_NAME=your_pinecone_index_name
     ```
 
 5. Run the bot:
