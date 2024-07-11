@@ -6,7 +6,7 @@ from model.chat_model import get_answer, get_chat_model
 from storage.database import get_index, get_messages, get_vectorstore
 from storage.trainers import train_textual_data
 from storage.updaters import update_knowledge_base
-from storage.utils import get_received_file_path
+from storage.utils import get_received_file_path, save_update_text
 from .utils import in_group_not_tagged
 import logging
 
@@ -56,9 +56,12 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     index = get_index()
     user_input = update.message.text
+    username = update.message.chat.username
     print("Updating with text info...")
     await update.message.reply_text('Обновление получено. Обновление базы знаний...')
-    train_textual_data(user_input[1:], index)
+    update_text = user_input[4:]
+    save_update_text(username=username, text=update_text)
+    train_textual_data(update_text, index)
     await update.message.reply_text('База знаний успешно обновлена!')
 
 
