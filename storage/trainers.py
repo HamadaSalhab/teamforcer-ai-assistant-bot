@@ -1,4 +1,5 @@
 import time
+from typing import List
 import pandas as pd
 from tqdm import tqdm
 from model.embeddings import get_embeddings_model
@@ -29,7 +30,7 @@ def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
                      'text': x.iloc[1]} for _, x in batch.iterrows()]
         index.upsert(vectors=zip(ids, embeds, metadata))
 
-def train_textual_data(text: str, index):
+def train_textual_data(text_list: List[str], index):
     """
     Trains the vector store with textual data by embedding and uploading the data.
 
@@ -37,7 +38,8 @@ def train_textual_data(text: str, index):
         text (str): The text data to embed and upload.
         index: The Pinecone index to update.
     """
-    vector_id = f"vector-{int(time.time() * 1000)}"
-    embeds = embeddings_model.embed_documents([text])
-    metadata = [{'text': text}]
-    index.upsert(vectors=zip([vector_id], embeds, metadata))
+    for text in tqdm(text_list, desc="Embedding textual data"):
+        vector_id = f"vector-{int(time.time() * 1000)}"
+        embeds = embeddings_model.embed_documents([text])
+        metadata = [{'text': text}]
+        index.upsert(vectors=zip([vector_id], embeds, metadata))

@@ -56,9 +56,9 @@ def read_docx(file_path):
         str: The content of the .docx file.
     """
     doc = Document(file_path)
-    full_text = ""
+    full_text = []
     for paragraph in doc.paragraphs:
-        full_text += "\n" + paragraph.text
+        full_text.append(paragraph.text)
     return full_text
 
 
@@ -78,4 +78,4 @@ def read_pdf(file_path):
         text = page.extract_text()
         if text:
             full_text.append(text)
-    return "\n".join(full_text)
+    return full_text
