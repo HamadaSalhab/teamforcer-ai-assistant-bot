@@ -19,7 +19,6 @@ def setup_telegram_bot():
     bot.add_handler(CommandHandler("start", start))
     bot.add_handler(CommandHandler("help", help_command))
     bot.add_handler(CommandHandler("upd", update_command))
-    bot.add_handler(CommandHandler("ask", echo))
 
     # Register message handlers
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
@@ -33,15 +32,14 @@ def setup_telegram_bot():
 
 async def set_commands(bot):
     """
-    Sets the commands list of the bot and to show them when typing a slash "/"
+    Устанавливает список команд бота и показывает их при вводе слеша "/"
 
-    Args:
-        bot: an object of type telegram.bot
+    Аргументы:
+        bot: объект типа telegram.bot
     """
     commands = [
         BotCommand("start", "Start the bot"),
         BotCommand("help", "Show help information"),
         BotCommand("upd", "Update the bot"),
-        BotCommand("ask", "Ask the bot a question"),
     ]
     await bot.set_my_commands(commands)
