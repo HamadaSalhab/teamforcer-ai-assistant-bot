@@ -32,14 +32,14 @@ def setup_telegram_bot():
 
 async def set_commands(bot):
     """
-    Устанавливает список команд бота и показывает их при вводе слеша "/"
+    Sets the commands list of the bot and to show them when typing a slash "/"
 
-    Аргументы:
-        bot: объект типа telegram.bot
+    Args:
+        bot: an object of type telegram.bot
     """
     commands = [
-        BotCommand("start", "Start the bot"),
-        BotCommand("help", "Show help information"),
-        BotCommand("upd", "Update the bot"),
+        BotCommand("start", "Запустить бота"),
+        BotCommand("help", "Показать информацию о помощи"),
+        BotCommand("upd", "Обновить базу знаний бота"),
     ]
     await bot.set_my_commands(commands)
