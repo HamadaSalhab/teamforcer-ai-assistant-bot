@@ -70,19 +70,6 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text('База знаний успешно обновлена!')
 
 
-async def update_plus_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Handler for messages starting with "+". Updates the knowledge base with new information.
-
-    Args:
-        update (Update): The update object containing the message.
-        context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
-    """
-    # Проверяем, что сообщение начинается с "+"
-    if update.message.text.startswith("+"):
-        await update_command(update, context)
-
-
 async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Saves the uploaded file to the server and updates the knowledge base.
