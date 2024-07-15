@@ -7,7 +7,7 @@ from storage.database import get_index, get_messages, get_vectorstore
 from storage.trainers import train_textual_data
 from storage.updaters import update_knowledge_base
 from storage.utils import get_received_file_path, save_update_text
-from .utils import in_group_not_tagged
+from .utils import NOT_AUTHORIZED_MESSAGE, in_group_not_tagged, is_authorized
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -50,6 +50,11 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
     """
+
+    if not is_authorized(update):
+        await update.message.reply_text(NOT_AUTHORIZED_MESSAGE)
+        return
+
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
         return
@@ -86,6 +91,11 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
     """
+
+    if not is_authorized(update):
+        await update.message.reply_text(NOT_AUTHORIZED_MESSAGE)
+        return
+
     file_name = update.message.document.file_name
     print(f"Received file: {file_name}")
     if update.message.document:
