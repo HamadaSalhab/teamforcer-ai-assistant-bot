@@ -40,6 +40,6 @@ async def set_commands(bot):
     commands = [
         BotCommand("start", "Запустить бота"),
         BotCommand("help", "Показать информацию о помощи"),
-        BotCommand("upd", "Обновить базу знаний бота"),
+        BotCommand("upd", "Обновить базу знаний бота \"/upd <текст>\""),
     ]
     await bot.set_my_commands(commands)
