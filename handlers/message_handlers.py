@@ -6,8 +6,8 @@ from model.chat_model import get_answer, get_chat_model
 from storage.database import get_index, get_messages, get_vectorstore
 from storage.trainers import train_textual_data
 from storage.updaters import update_knowledge_base
-from storage.utils import get_received_file_path
-from .utils import in_group_not_tagged
+from storage.utils import get_received_file_path, save_update_text
+from .utils import NOT_AUTHORIZED_MESSAGE, in_group_not_tagged, is_authorized
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -50,6 +50,11 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
     """
+
+    if not is_authorized(update):
+        await update.message.reply_text(NOT_AUTHORIZED_MESSAGE)
+        return
+
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
         return
@@ -63,21 +68,10 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     index = get_index()
     print("Updating with text info...")
     await update.message.reply_text('Обновление получено. Обновление базы знаний...')
-    train_textual_data(user_input[1:], index)
+    update_text = user_input[4:]
+    save_update_text(username=username, text=update_text)
+    train_textual_data(update_text, index)
     await update.message.reply_text('База знаний успешно обновлена!')
-
-
-async def update_plus_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """
-    Handler for messages starting with "+". Updates the knowledge base with new information.
-
-    Args:
-        update (Update): The update object containing the message.
-        context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
-    """
-    # Проверяем, что сообщение начинается с "+"
-    if update.message.text.startswith("+"):
-        await update_command(update, context)
 
 
 async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -88,6 +82,11 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
     """
+
+    if not is_authorized(update):
+        await update.message.reply_text(NOT_AUTHORIZED_MESSAGE)
+        return
+
     file_name = update.message.document.file_name
     print(f"Received file: {file_name}")
     if update.message.document:

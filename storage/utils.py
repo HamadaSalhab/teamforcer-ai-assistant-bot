@@ -2,7 +2,22 @@ from pypdf import PdfReader
 import os
 from docx import Document
 from config import UPLOAD_FOLDER
+from datetime import datetime
 
+def save_update_text(username: str, text: str) -> bool:
+    try:
+        timestamp = datetime.now().strftime("%d-%m-%Y_%H%M%S")
+
+        if not os.path.exists(UPLOAD_FOLDER):
+            os.makedirs(UPLOAD_FOLDER)
+
+        filename = f"{UPLOAD_FOLDER}/{username}_at_{timestamp}"
+        with open(f"{filename}", "w") as text_file:
+            text_file.write(text)
+            return True
+    except Exception as e:
+        print(f"Error occured while saving text file from /upd command: {e}")
+        return False
 
 def get_received_file_path(filename: str):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
@@ -41,9 +56,9 @@ def read_docx(file_path):
         str: The content of the .docx file.
     """
     doc = Document(file_path)
-    full_text = ""
+    full_text = []
     for paragraph in doc.paragraphs:
-        full_text += "\n" + paragraph.text
+        full_text.append(paragraph.text)
     return full_text
 
 
@@ -63,4 +78,4 @@ def read_pdf(file_path):
         text = page.extract_text()
         if text:
             full_text.append(text)
-    return "\n".join(full_text)
+    return full_text
