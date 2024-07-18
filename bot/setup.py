@@ -1,4 +1,5 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram import Bot
 from telegram import BotCommand
 from handlers.message_handlers import echo, update_command, update_with_file
 from handlers.command_handlers import start, help_command
@@ -30,7 +31,7 @@ def setup_telegram_bot():
     return bot
 
 
-async def set_commands(bot):
+async def set_commands(bot: Bot):
     """
     Sets the commands list of the bot and to show them when typing a slash "/"
 
