@@ -60,6 +60,7 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     user_input = update.message.text
+    username = update.message.chat.username
     
     if len(user_input.split()) < 2:
         await update.message.reply_text('Пожалуйста, предоставьте текст после команды /upd.')
