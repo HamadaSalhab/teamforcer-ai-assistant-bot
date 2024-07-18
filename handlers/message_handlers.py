@@ -59,9 +59,14 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if in_group_not_tagged(update, context):
         return
 
-    index = get_index()
     user_input = update.message.text
     username = update.message.chat.username
+    
+    if len(user_input.split()) < 2:
+        await update.message.reply_text('Пожалуйста, предоставьте текст после команды /upd.')
+        return
+    
+    index = get_index()
     print("Updating with text info...")
     await update.message.reply_text('Обновление получено. Обновление базы знаний...')
     update_text = user_input[4:]
