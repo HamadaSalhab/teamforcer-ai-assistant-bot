@@ -28,8 +28,7 @@ def get_received_file_path(filename: str):
 
     if os.path.exists(file_path):
         file_path = change_duplicate_filename(file_path)
-        print(f"A similar file with the same name was found. Changing to {
-            file_path}")
+        print(f"A similar file with the same name was found. Changing to {file_path}")
         
     return file_path
 

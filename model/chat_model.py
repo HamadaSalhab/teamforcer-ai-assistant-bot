@@ -1,9 +1,10 @@
 from typing import List
-from langchain.schema import HumanMessage
+from sqlalchemy.orm import Session
+from langchain.schema import HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from langchain_pinecone import PineconeVectorStore
 from config import MODEL_NAME, OPENAI_API_KEY
-
+from storage.sqlalchemy_database import get_chat_history
 
 def augment_prompt(query: str, vectorstore: PineconeVectorStore):
     """
@@ -27,7 +28,7 @@ def augment_prompt(query: str, vectorstore: PineconeVectorStore):
     return augmented_prompt
 
 
-def get_answer(query: str, chat, vectorstore, messages: List[str]):
+def get_answer(query: str, chat, vectorstore, messages: List[str], user_id: int, group_id: int, db: Session):
     """
     Generates an answer to the user query using the chat model and vector store.
 
@@ -41,7 +42,20 @@ def get_answer(query: str, chat, vectorstore, messages: List[str]):
         str: The generated answer.
         List[str]: The updated list of messages.
     """
+    chat_history = get_chat_history(db, user_id, group_id)
+    
+    messages = []
+    
+    # Add all chat history to messages
+    for history_item in chat_history:
+        if history_item.user_id == user_id:
+            messages.append(HumanMessage(content=history_item.message_content))
+        else:
+            messages.append(AIMessage(content=history_item.message_content))
+    
+    # Augment prompt with vector store data
     augmented_prompt = augment_prompt(query, vectorstore)
+
     messages.append(HumanMessage(content=augmented_prompt))
 
     # Generate response using the chat model

@@ -1,7 +1,7 @@
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 from telegram import Bot
 from telegram import BotCommand
-from handlers.message_handlers import echo, update_command, update_with_file
+from handlers.message_handlers import echo, update_command, update_with_file, get_history
 from handlers.command_handlers import start, help_command
 from config import TELEGRAM_BOT_TOKEN
 import asyncio
@@ -20,6 +20,7 @@ def setup_telegram_bot():
     bot.add_handler(CommandHandler("start", start))
     bot.add_handler(CommandHandler("help", help_command))
     bot.add_handler(CommandHandler("upd", update_command))
+    bot.add_handler(CommandHandler("history", get_history))
 
     # Register message handlers
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
@@ -42,5 +43,6 @@ async def set_commands(bot: Bot):
         BotCommand("start", "Запустить бота"),
         BotCommand("help", "Показать информацию о помощи"),
         BotCommand("upd", "Обновить базу знаний бота \"/upd <текст>\""),
+        BotCommand("history", "получить историю разговора"),
     ]
     await bot.set_my_commands(commands)
