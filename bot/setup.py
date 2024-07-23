@@ -21,9 +21,8 @@ def setup_telegram_bot():
     bot.add_handler(CommandHandler("help", help_command))
     bot.add_handler(CommandHandler("upd", update_command))
     bot.add_handler(CommandHandler("stats", stats_command))
-    bot.add_handler(CallbackQueryHandler(button))
-
     bot.add_handler(CommandHandler("history", get_history))
+    bot.add_handler(CallbackQueryHandler(button))
 
     # Register message handlers
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))

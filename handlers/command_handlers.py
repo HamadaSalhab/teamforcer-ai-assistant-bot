@@ -1,8 +1,7 @@
 from telegram import KeyboardButton, ReplyKeyboardMarkup, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
-from .utils import validate_date, get_stats_by_date
-import requests
+from .utils import NOT_AUTHORIZED_MESSAGE, validate_date, get_stats_by_date, is_authorized
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -42,12 +41,16 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    Handler for the stast command. Sends user stats for users with admin access.
+    Handler for the /stats command. Sends user stats for users with admin access.
     
     Args:
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
     """
+    if not is_authorized(update):
+        await update.message.reply_text(NOT_AUTHORIZED_MESSAGE)
+        return
+
     if len(context.args) < 1:
         await update.message.reply_text('Пожалуйста, укажите дату в формате ГГГГ-ММ-ДД.')
         return
@@ -64,8 +67,8 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await update.message.reply_text(f'Нет данных за дату {date}.')
     else:
         total_users = len(stats_data)
-        total_requests = sum(stat['requests_count'] for stat in stats_data)
-        total_files = sum(stat['files_count'] for stat in stats_data)
+        total_requests = sum(stat['request_count'] for stat in stats_data)
+        total_files = sum(stat['file_count'] for stat in stats_data)
 
         formatted_response = (f"*Общая статистика за дату {date}:*\n\n"
                               f"*Всего пользователей:* `{total_users}`\n"
@@ -76,13 +79,11 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         reply_markup = InlineKeyboardMarkup(keyboard)
 
         await update.message.reply_text(formatted_response, parse_mode=ParseMode.MARKDOWN, reply_markup=reply_markup)
-    # else:
-    #     await update.message.reply_text('Could not retrieve stats at this time.')
 
 
 async def show_details(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
-    Handler for showing detailed user stats.
+    Handler for showing detailed user stats after pressing the /stats command button.
     
     Args:
         update (Update): The update object containing the message.
@@ -99,8 +100,8 @@ async def show_details(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         formatted_response = f"*Детальная статистика за дату {date}:*\n"
         for stat in stats_data:
             formatted_response += (f"\n*ID пользователя:* `{stat['user_id']}`\n"
-                                   f"*Количество запросов:* `{stat['requests_count']}`\n"
-                                   f"*Количество файлов:* `{stat['files_count']}`\n")
+                                   f"*Запросов:* `{stat['request_count']}`\n"
+                                   f"*Файлов:* `{stat['file_count']}`\n")
 
         await query.message.reply_text(formatted_response, parse_mode=ParseMode.MARKDOWN)
 

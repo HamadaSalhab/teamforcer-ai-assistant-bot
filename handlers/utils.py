@@ -2,8 +2,9 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from datetime import datetime
 from config import AUTHORIZED_USERNAMES
+import requests
 
-NOT_AUTHORIZED_MESSAGE = 'Извините. Вам не разрешено обновлять базу знаний.'
+NOT_AUTHORIZED_MESSAGE = 'Извините. Вам не разрешено использовать эту команду.'
 
 
 def in_group_not_tagged(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -46,7 +47,6 @@ def validate_date(date_text: str) -> bool:
         return False
 
 
-# TODO: Replace mock data with API 
 def get_stats_by_date(date: str):
     """
     Returns fetched user stats data. 
@@ -57,13 +57,9 @@ def get_stats_by_date(date: str):
     Returns:
         json: reponse json that contains all fetched information.
     """
-    # url = f'http://127.0.0.1:5000/user_stats_by_date?date={date}'
-    # response = requests.get(url)
-    # if response.status_code == 200:
-    #     stats_data = response.json()
-    stats_data = [
-        {"user_id": 23, "requests_count": 4, "files_count": 0},
-        {"user_id": 34, "requests_count": 10, "files_count": 3},
-        {"user_id": 44, "requests_count": 1, "files_count": 1}
-    ]
+    url = f'http://127.0.0.1:5000/user_stats_by_date?date={date}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        stats_data = response.json()
+
     return stats_data
