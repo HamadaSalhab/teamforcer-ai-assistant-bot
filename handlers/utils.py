@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from datetime import datetime
-from config import AUTHORIZED_USERNAMES
+from config import AUTHORIZED_USERNAMES, FLASK_HOST, FLASK_PORT
 import requests
 
 NOT_AUTHORIZED_MESSAGE = 'Извините. Вам не разрешено использовать эту команду.'
@@ -57,7 +57,7 @@ def get_stats_by_date(date: str):
     Returns:
         json: reponse json that contains all fetched information.
     """
-    url = f'http://127.0.0.1:5000/user_stats_by_date?date={date}'
+    url = f'http://{FLASK_HOST}:{FLASK_PORT}/user_stats_by_date?date={date}'
     response = requests.get(url)
     if response.status_code == 200:
         stats_data = response.json()
