@@ -44,7 +44,7 @@ def get_index():
     return index
 
 
-def get_vectorstore(index):
+def get_vectorstore(index) -> PineconeVectorStore:
     """
     Initializes and returns the Pinecone vector store with the specified index.
 

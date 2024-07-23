@@ -6,7 +6,7 @@ from langchain_pinecone import PineconeVectorStore
 from config import MODEL_NAME, OPENAI_API_KEY
 from storage.sqlalchemy_database import get_chat_history
 
-def augment_prompt(query: str, vectorstore: PineconeVectorStore):
+def augment_prompt(query: str, messages: List[str], vectorstore: PineconeVectorStore):
     """
     Augments the user query with relevant context from the vector store.
 
@@ -19,16 +19,19 @@ def augment_prompt(query: str, vectorstore: PineconeVectorStore):
     """
     results = vectorstore.similarity_search(query, k=3)
     source_knowledge = "\n".join([x.page_content for x in results])
-    augmented_prompt = f"""Using the context below, answer the query.
+    augmented_prompt = f"""Using the context below, and the previous chat history, answer the query.
 
     Context:
     {source_knowledge}
+
+    Chat History:
+    {"\n".join(messages)}
 
     Query: {query}"""
     return augmented_prompt
 
 
-def get_answer(query: str, chat, vectorstore, messages: List[str], user_id: int, group_id: int, db: Session):
+def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, messages: List[str], user_id: int, group_id: int, db: Session):
     """
     Generates an answer to the user query using the chat model and vector store.
 
@@ -43,18 +46,18 @@ def get_answer(query: str, chat, vectorstore, messages: List[str], user_id: int,
         List[str]: The updated list of messages.
     """
     chat_history = get_chat_history(db, user_id, group_id)
-    
+    print("chat_history: ")
+    print(chat_history)
     messages = []
     
     # Add all chat history to messages
     for history_item in chat_history:
-        if history_item.user_id == user_id:
-            messages.append(HumanMessage(content=history_item.message_content))
-        else:
-            messages.append(AIMessage(content=history_item.message_content))
+        who_sent = "AI Assistant" if history_item.is_bot else "Human"
+        messages.append(f'{who_sent} Message: {history_item.message_content}')
+
     
     # Augment prompt with vector store data
-    augmented_prompt = augment_prompt(query, vectorstore)
+    augmented_prompt = augment_prompt(query, messages, vectorstore)
 
     messages.append(HumanMessage(content=augmented_prompt))
 
@@ -72,13 +75,13 @@ def get_answer(query: str, chat, vectorstore, messages: List[str], user_id: int,
     #         break
 
     # Clear previous messages except the most recent one
-    while len(messages) > 1:
-        messages.pop()
+    # while len(messages) > 1:
+    #     messages.pop()
 
-    return res.content, messages
+    return res.content
 
 
-def get_chat_model():
+def get_chat_model() -> ChatOpenAI:
     """
     Initializes and returns a ChatOpenAI model instance.
 

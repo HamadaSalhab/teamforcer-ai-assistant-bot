@@ -31,13 +31,14 @@ def get_db():
 #     columns = [column['name'] for column in inspector.get_columns('chat_history')]
 #     print("New schema columns for 'chat_history':", columns)
 
-def save_message(db: Session, user_id: int, group_id: int, message_content: str, is_group: bool, file_name: str = None, file_type: str = None):  
+def save_message(db: Session, user_id: int, group_id: int, is_bot: bool, message_content: str, is_group: bool, file_name: str = None, file_type: str = None):  
     current_time = datetime.utcnow()  # Get current UTC time
     db_message = ChatHistory(
         user_id=user_id,
         group_id=group_id,
         message_content=message_content,
         is_group=is_group,
+        is_bot=is_bot,
         timestamp=current_time,
         file_name=file_name,
         file_type=file_type
@@ -53,7 +54,7 @@ def save_message(db: Session, user_id: int, group_id: int, message_content: str,
           f"content='{truncated_content}', file_name='{file_name}', file_type='{file_type}'")
     return db_message
 
-def get_chat_history(db: Session, user_id: int = None, group_id: int = None):
+def get_chat_history(db: Session, user_id: int = None, group_id: int = None) -> ChatHistory:
     if group_id:
         return db.query(ChatHistory).filter(ChatHistory.group_id == group_id).order_by(ChatHistory.timestamp).all()
     elif user_id:

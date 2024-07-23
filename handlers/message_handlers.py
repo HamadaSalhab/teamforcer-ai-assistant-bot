@@ -27,7 +27,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     vectorstore = get_vectorstore(index)
     chat = get_chat_model()
     messages = get_messages()
-
+    
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
         return
@@ -43,11 +43,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     group_id = update.message.chat.id if update.message.chat.type in ['group', 'supergroup'] else None
     is_group = update.message.chat.type in ['group', 'supergroup']
 
-    save_message(db, user_id, group_id, user_input, is_group)
+    save_message(db, user_id, group_id, False, user_input, is_group)
 
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
-    answer, messages = get_answer(user_input, chat, vectorstore, messages, user_id, group_id, db)
+    answer = get_answer(user_input, chat, vectorstore, messages, user_id, group_id, db)
+    save_message(db, user_id, group_id, True, answer, is_group)
     await update.message.reply_text(answer)
 
 
@@ -120,7 +121,8 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             is_group = update.message.chat.type in ['group', 'supergroup']
             print(f"filename {file_name}")
             print(f"filetype {file_type}")
-            save_message(db, user_id, group_id, f"File uploaded: {file_name}", is_group, file_name, file_type)
+            save_message(db, user_id, group_id, is_bot=False, message_content=f"File uploaded: {file_name}", 
+                         is_group=is_group, file_name=file_name, file_type=file_type)
 
             await update.message.reply_text(f'Файл сохранен. Обновление базы знаний...')
         else:
