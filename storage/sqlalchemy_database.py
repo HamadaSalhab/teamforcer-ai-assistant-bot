@@ -47,11 +47,9 @@ def save_message(db: Session, user_id: int, group_id: int, is_bot: bool, message
     db.commit()
     db.refresh(db_message)
 
-    # Truncate message_content if it's too long
-    truncated_content = message_content[:50] + "..." if len(message_content) > 50 else message_content
     print(f"Saved message: user_id={db_message.user_id}, group_id={db_message.group_id}, "
           f"timestamp={db_message.timestamp}, is_group={db_message.is_group}, "
-          f"content='{truncated_content}', file_name='{file_name}', file_type='{file_type}'")
+          f"content='{message_content}', file_name='{file_name}', file_type='{file_type}'")
     return db_message
 
 def get_chat_history(db: Session, user_id: int = None, group_id: int = None) -> ChatHistory:
