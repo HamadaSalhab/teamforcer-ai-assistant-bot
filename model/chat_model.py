@@ -46,8 +46,6 @@ def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, m
         List[str]: The updated list of messages.
     """
     chat_history = get_chat_history(db, user_id, group_id)
-    print("chat_history: ")
-    print(chat_history)
 
     # Add all chat history to messages
     for history_item in chat_history:
