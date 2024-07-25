@@ -2,7 +2,8 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from datetime import datetime
 from config import AUTHORIZED_USERNAMES
-import requests
+from storage.sqlalchemy_database import get_db, ChatHistory
+from sqlalchemy import func, case
 
 NOT_AUTHORIZED_MESSAGE = 'Извините. Вам не разрешено использовать эту команду.'
 
@@ -46,7 +47,6 @@ def validate_date(date_text: str) -> bool:
     except ValueError:
         return False
 
-
 def get_stats_by_date(date: str):
     """
     Returns fetched user stats data. 
@@ -57,9 +57,29 @@ def get_stats_by_date(date: str):
     Returns:
         json: reponse json that contains all fetched information.
     """
-    url = f'http://{FLASK_HOST}:{FLASK_PORT}/user_stats_by_date?date={date}'
-    response = requests.get(url)
-    if response.status_code == 200:
-        stats_data = response.json()
+    try:
+        # Convert the string date to a datetime object
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+    except ValueError:
+        raise ValueError("Invalid date format. Please use 'YYYY-MM-DD'.")
 
-    return stats_data
+    db = next(get_db())
+    user_stats = db.query(
+        ChatHistory.user_id,
+        func.count(ChatHistory.id).label('request_count'),
+        func.sum(case((ChatHistory.file_name.isnot(None), 1), else_=0)).label('file_count')
+    ).filter(
+        func.date(ChatHistory.timestamp) == date_obj
+    ).group_by(ChatHistory.user_id).all()
+    
+    # Convert the result to a list of dictionaries
+    result = [
+        {
+            "user_id": stat.user_id,
+            "request_count": stat.request_count,
+            "file_count": stat.file_count
+        }
+        for stat in user_stats
+    ]
+    
+    return result
