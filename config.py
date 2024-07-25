@@ -17,8 +17,7 @@ UPLOAD_FOLDER = './uploaded_files/'
 # OpenAI model configs
 MODEL_NAME = "gpt-4-turbo-2024-04-09"
 EMBEDDING_MODEL_NAME = "text-embedding-ada-002"
-MAX_MESSAGES = 100
-MAX_TOKENS = 120000
+MAX_TOKENS = 30000
 
 # Bot admins (have access to uploading files & getting stats)
 AUTHORIZED_USERNAMES = os.getenv('AUTHORIZED_USERNAMES').split(',')
