@@ -57,19 +57,13 @@ def get_stats_by_date(date: str):
     Returns:
         json: reponse json that contains all fetched information.
     """
-    try:
-        # Convert the string date to a datetime object
-        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-    except ValueError:
-        raise ValueError("Invalid date format. Please use 'YYYY-MM-DD'.")
-
     db = next(get_db())
     user_stats = db.query(
         ChatHistory.user_id,
         func.count(ChatHistory.id).label('request_count'),
         func.sum(case((ChatHistory.file_name.isnot(None), 1), else_=0)).label('file_count')
     ).filter(
-        func.date(ChatHistory.timestamp) == date_obj
+        func.date(ChatHistory.timestamp) == date
     ).group_by(ChatHistory.user_id).all()
     
     # Convert the result to a list of dictionaries
