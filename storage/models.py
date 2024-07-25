@@ -17,6 +17,7 @@ class ChatHistory(Base):
     group_id = Column(BigInteger, index=True, nullable=True)
     timestamp = Column(TIMESTAMP, server_default=func.now(), index=True)
     message_content = Column(Text)
+    is_bot = Column(Boolean)
     is_group = Column(Boolean)
     file_name = Column(String, nullable=True)
     file_type = Column(String, nullable=True)
