@@ -57,7 +57,7 @@ def get_vectorstore(index) -> PineconeVectorStore:
     return PineconeVectorStore(index=index, embedding=get_embeddings_model(), text_key="text")
 
 
-def get_messages():
+def get_base_messages():
     """
     Returns the default list of messages to initialize the bot conversation.
 

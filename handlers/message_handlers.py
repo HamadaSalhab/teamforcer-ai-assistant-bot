@@ -1,15 +1,18 @@
 import os
+from langchain_openai import ChatOpenAI
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ChatAction
 from model.chat_model import get_answer, get_chat_model
-from storage.database import get_index, get_messages, get_vectorstore
+from storage.database import get_index, get_base_messages, get_vectorstore
 from storage.trainers import train_textual_data
 from storage.updaters import update_knowledge_base
 from storage.utils import get_received_file_path, save_update_text
 from .utils import NOT_AUTHORIZED_MESSAGE, in_group_not_tagged, is_authorized
 import logging
 from storage.sqlalchemy_database import get_db, save_message, get_chat_history
+from langchain_core.messages.base import BaseMessage
+from typing import List
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,8 +28,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     index = get_index()
     vectorstore = get_vectorstore(index)
-    chat = get_chat_model()
-    messages = get_messages()
+    chat: ChatOpenAI = get_chat_model()
+    messages: List[BaseMessage] = get_base_messages()
     
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
