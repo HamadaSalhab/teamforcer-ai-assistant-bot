@@ -5,8 +5,10 @@ from langchain_openai import ChatOpenAI
 from langchain_pinecone import PineconeVectorStore
 from config import MODEL_NAME, OPENAI_API_KEY
 from storage.sqlalchemy_database import get_chat_history
+from langchain_core.messages.base import BaseMessage
 
-def augment_prompt(query: str, messages: List[str], vectorstore: PineconeVectorStore):
+
+def augment_prompt(query: str, vectorstore: PineconeVectorStore):
     """
     Augments the user query with relevant context from the vector store.
 
@@ -24,14 +26,11 @@ def augment_prompt(query: str, messages: List[str], vectorstore: PineconeVectorS
     Context:
     {source_knowledge}
 
-    Chat History:
-    {"\n".join(messages)}
-
     Query: {query}"""
     return augmented_prompt
 
 
-def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, messages: List[str], user_id: int, group_id: int, db: Session):
+def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, messages: List[BaseMessage], user_id: int, group_id: int, db: Session):
     """
     Generates an answer to the user query using the chat model and vector store.
 
@@ -48,35 +47,19 @@ def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, m
     chat_history = get_chat_history(db, user_id, group_id)
     print("chat_history: ")
     print(chat_history)
-    messages = []
-    
+
     # Add all chat history to messages
     for history_item in chat_history:
-        who_sent = "AI Assistant" if history_item.is_bot else "Human"
-        messages.append(f'{who_sent} Message: {history_item.message_content}')
+        messages.append(AIMessage(content=history_item.message_content)
+                        if history_item.is_bot else HumanMessage(content=history_item.message_content))
 
-    
     # Augment prompt with vector store data
-    augmented_prompt = augment_prompt(query, messages, vectorstore)
+    augmented_prompt = augment_prompt(query, vectorstore)
 
     messages.append(HumanMessage(content=augmented_prompt))
 
     # Generate response using the chat model
     res = chat.invoke(messages)
-
-    # messages.append(res)
-    
-    # while count_tokens(messages) > MAX_TOKENS:
-    #     # Remove the oldest human-AI message pair
-    #     if len(messages) > 3:  # Keep the initial SystemMessage and at least one exchange
-    #         messages.pop(1)
-    #         messages.pop(1)
-    #     else:
-    #         break
-
-    # Clear previous messages except the most recent one
-    # while len(messages) > 1:
-    #     messages.pop()
 
     return res.content
 
