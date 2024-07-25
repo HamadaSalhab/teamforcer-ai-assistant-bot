@@ -1,21 +1,19 @@
 import tiktoken
-from config import MODEL_NAME
+from config import MAX_TOKENS, MODEL_NAME
 
 
-def count_tokens(messages):
+def exceeds_model_tokens_limit(text: str) -> bool:
     """
     Uses tiktoken to count the number of tokens in the messages.
 
     Args:
-        messages (list): The list of messages to be tokenized.
+        text (string): The text to be tokenized.
 
     Returns:
-        int: The total number of tokens in the messages.
+        bool: True if the given text exceeds the token limit, False otherise.
     """
     # Initialize the tiktoken encoding for the OpenAI model
     encoding = tiktoken.encoding_for_model(MODEL_NAME)
 
-    total_tokens = 0
-    for msg in messages:
-        total_tokens += len(encoding.encode(msg.content))
-    return total_tokens
+    total_tokens = len(encoding.encode(text))
+    return total_tokens > MAX_TOKENS

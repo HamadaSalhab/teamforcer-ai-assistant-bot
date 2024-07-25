@@ -5,6 +5,9 @@ from langchain_openai import ChatOpenAI
 from langchain_pinecone import PineconeVectorStore
 from config import MODEL_NAME, OPENAI_API_KEY
 from storage.sqlalchemy_database import get_chat_history
+from .utils import exceeds_model_tokens_limit
+from langchain_core.messages.base import BaseMessage
+
 
 def augment_prompt(query: str, vectorstore: PineconeVectorStore):
     """
@@ -19,7 +22,7 @@ def augment_prompt(query: str, vectorstore: PineconeVectorStore):
     """
     results = vectorstore.similarity_search(query, k=3)
     source_knowledge = "\n".join([x.page_content for x in results])
-    augmented_prompt = f"""Using the context below, answer the query.
+    augmented_prompt = f"""Using the context below, and the previous chat history, answer the query.
 
     Context:
     {source_knowledge}
@@ -28,7 +31,7 @@ def augment_prompt(query: str, vectorstore: PineconeVectorStore):
     return augmented_prompt
 
 
-def get_answer(query: str, chat, vectorstore, messages: List[str], user_id: int, group_id: int, db: Session):
+def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, messages: List[BaseMessage], user_id: int, group_id: int, db: Session):
     """
     Generates an answer to the user query using the chat model and vector store.
 
@@ -43,42 +46,35 @@ def get_answer(query: str, chat, vectorstore, messages: List[str], user_id: int,
         List[str]: The updated list of messages.
     """
     chat_history = get_chat_history(db, user_id, group_id)
-    
-    messages = []
-    
+    print("chat_history: ")
+    print(chat_history)
+
     # Add all chat history to messages
     for history_item in chat_history:
-        if history_item.user_id == user_id:
-            messages.append(HumanMessage(content=history_item.message_content))
-        else:
-            messages.append(AIMessage(content=history_item.message_content))
-    
+        messages.append(AIMessage(content=history_item.message_content)
+                        if history_item.is_bot else HumanMessage(content=history_item.message_content))
+
     # Augment prompt with vector store data
     augmented_prompt = augment_prompt(query, vectorstore)
 
     messages.append(HumanMessage(content=augmented_prompt))
 
+    while exceeds_model_tokens_limit("".join(message.content for message in messages)):
+        # Remove the oldest human-AI message pair
+        if len(messages) > 4:  # Keep the initial SystemMessage and at least one exchange
+            messages.pop(3)
+            messages.pop(3)
+        else:
+            # Only occurs when the first human-AI message pair + first augmented prompt exceed token limit
+            return "Произошла ошибка.\n(Код ошибки: 0x310).\n\nПожалуйста, сообщите об этом разработчику бота @hamadasalhab"
+
     # Generate response using the chat model
     res = chat.invoke(messages)
 
-    # messages.append(res)
-    
-    # while count_tokens(messages) > MAX_TOKENS:
-    #     # Remove the oldest human-AI message pair
-    #     if len(messages) > 3:  # Keep the initial SystemMessage and at least one exchange
-    #         messages.pop(1)
-    #         messages.pop(1)
-    #     else:
-    #         break
-
-    # Clear previous messages except the most recent one
-    while len(messages) > 1:
-        messages.pop()
-
-    return res.content, messages
+    return res.content
 
 
-def get_chat_model():
+def get_chat_model() -> ChatOpenAI:
     """
     Initializes and returns a ChatOpenAI model instance.
 

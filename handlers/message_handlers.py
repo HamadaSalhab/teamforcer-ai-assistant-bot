@@ -1,15 +1,18 @@
 import os
+from langchain_openai import ChatOpenAI
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ChatAction
 from model.chat_model import get_answer, get_chat_model
-from storage.database import get_index, get_messages, get_vectorstore
+from storage.database import get_index, get_base_messages, get_vectorstore
 from storage.trainers import train_textual_data
 from storage.updaters import update_knowledge_base
 from storage.utils import get_received_file_path, save_update_text
 from .utils import NOT_AUTHORIZED_MESSAGE, in_group_not_tagged, is_authorized
 import logging
 from storage.sqlalchemy_database import get_db, save_message, get_chat_history
+from langchain_core.messages.base import BaseMessage
+from typing import List
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,9 +28,9 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     index = get_index()
     vectorstore = get_vectorstore(index)
-    chat = get_chat_model()
-    messages = get_messages()
-
+    chat: ChatOpenAI = get_chat_model()
+    messages: List[BaseMessage] = get_base_messages()
+    
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
         return
@@ -43,11 +46,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     group_id = update.message.chat.id if update.message.chat.type in ['group', 'supergroup'] else None
     is_group = update.message.chat.type in ['group', 'supergroup']
 
-    save_message(db, user_id, group_id, user_input, is_group)
+    save_message(db, user_id, group_id, False, user_input, is_group)
 
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
-    answer, messages = get_answer(user_input, chat, vectorstore, messages, user_id, group_id, db)
+    answer = get_answer(user_input, chat, vectorstore, messages, user_id, group_id, db)
+    save_message(db, user_id, group_id, True, answer, is_group)
     await update.message.reply_text(answer)
 
 
@@ -120,7 +124,8 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             is_group = update.message.chat.type in ['group', 'supergroup']
             print(f"filename {file_name}")
             print(f"filetype {file_type}")
-            save_message(db, user_id, group_id, f"File uploaded: {file_name}", is_group, file_name, file_type)
+            save_message(db, user_id, group_id, is_bot=False, message_content=f"File uploaded: {file_name}", 
+                         is_group=is_group, file_name=file_name, file_type=file_type)
 
             await update.message.reply_text(f'Файл сохранен. Обновление базы знаний...')
         else:
