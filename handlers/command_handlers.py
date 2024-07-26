@@ -52,7 +52,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     if len(context.args) < 1:
-        await update.message.reply_text('Пожалуйста, укажите дату в формате ГГГГ-ММ-ДД.')
+        await update.message.reply_text('Пожалуйста, предоставьте дату после команды /stats.')
         return
     
     date = context.args[0]
