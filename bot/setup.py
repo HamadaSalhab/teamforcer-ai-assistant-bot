@@ -16,7 +16,6 @@ def setup_telegram_bot() -> Bot:
     """
     # Create a new application instance for the bot
     bot: Bot = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-    print(type(bot))
     # Register command handlers
     bot.add_handler(CommandHandler("start", start))
     bot.add_handler(CommandHandler("help", help_command))
