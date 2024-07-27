@@ -5,7 +5,7 @@ from .models import ChatHistory, SessionLocal
 from datetime import datetime
 
 def get_db():
-    db = SessionLocal()
+    db: Session = SessionLocal()
     try:
         yield db
     finally:

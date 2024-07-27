@@ -1,3 +1,4 @@
+from typing import List
 from pypdf import PdfReader
 import os
 from docx import Document
@@ -19,7 +20,7 @@ def save_update_text(username: str, text: str) -> bool:
         print(f"Error occured while saving text file from /upd command: {e}")
         return False
 
-def get_received_file_path(filename: str):
+def get_received_file_path(filename: str) -> str:
     file_path = os.path.join(UPLOAD_FOLDER, filename)
 
     # Ensure the upload folder exists
@@ -33,7 +34,7 @@ def get_received_file_path(filename: str):
     return file_path
 
 
-def change_duplicate_filename(file_path: str):
+def change_duplicate_filename(file_path: str) -> str:
     if len(file_path.split(".")) > 3:
         raise Exception("Unsupported file format!")
     splits = file_path.split(".")
@@ -44,7 +45,7 @@ def change_duplicate_filename(file_path: str):
     return file_path
 
 
-def read_docx(file_path):
+def read_docx(file_path: str) -> List[str]:
     """
     Reads the content of a .docx file.
 
@@ -61,7 +62,7 @@ def read_docx(file_path):
     return full_text
 
 
-def read_pdf(file_path):
+def read_pdf(file_path: str) -> List[str]:
     """
     Reads the content of a .pdf file.
 

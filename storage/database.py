@@ -1,11 +1,12 @@
 import time
+from typing import List
 from langchain_pinecone import PineconeVectorStore
 from pinecone import ServerlessSpec, Pinecone
-from langchain.schema import SystemMessage, HumanMessage, AIMessage
+from langchain.schema import SystemMessage, HumanMessage, AIMessage, BaseMessage
 from config import PINECONE_API_KEY
 from model.embeddings import get_embeddings_model
 from config import INDEX_NAME
-
+from pinecone.data.index import Index
 
 # Default messages to initialize the bot conversation
 messages = [
@@ -15,7 +16,7 @@ messages = [
 ]
 
 
-def get_index():
+def get_index() -> Index:
     """
     Initializes and returns the Pinecone index. Creates the index if it doesn't exist.
 
@@ -44,7 +45,7 @@ def get_index():
     return index
 
 
-def get_vectorstore(index) -> PineconeVectorStore:
+def get_vectorstore(index: Index) -> PineconeVectorStore:
     """
     Initializes and returns the Pinecone vector store with the specified index.
 
@@ -57,7 +58,7 @@ def get_vectorstore(index) -> PineconeVectorStore:
     return PineconeVectorStore(index=index, embedding=get_embeddings_model(), text_key="text")
 
 
-def get_base_messages():
+def get_base_messages() -> List[BaseMessage]:
     """
     Returns the default list of messages to initialize the bot conversation.
 

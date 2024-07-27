@@ -9,7 +9,7 @@ from .utils import exceeds_model_tokens_limit
 from langchain_core.messages.base import BaseMessage
 
 
-def augment_prompt(query: str, vectorstore: PineconeVectorStore):
+def augment_prompt(query: str, vectorstore: PineconeVectorStore) -> str:
     """
     Augments the user query with relevant context from the vector store.
 
@@ -31,7 +31,7 @@ def augment_prompt(query: str, vectorstore: PineconeVectorStore):
     return augmented_prompt
 
 
-def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, messages: List[BaseMessage], user_id: int, group_id: int, db: Session):
+def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, messages: List[BaseMessage], user_id: int, group_id: int, db: Session) -> str:
     """
     Generates an answer to the user query using the chat model and vector store.
 

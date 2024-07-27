@@ -2,7 +2,7 @@ from langchain_openai import OpenAIEmbeddings
 from config import EMBEDDING_MODEL_NAME
 
 
-def get_embeddings_model():
+def get_embeddings_model() -> OpenAIEmbeddings:
     """
     Initializes and returns an OpenAIEmbeddings model instance.
 

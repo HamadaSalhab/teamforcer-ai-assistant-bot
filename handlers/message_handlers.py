@@ -13,6 +13,7 @@ import logging
 from storage.sqlalchemy_database import get_db, save_message, get_chat_history
 from langchain_core.messages.base import BaseMessage
 from typing import List
+from pinecone.data.index import Index
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,31 +27,30 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         update (Update): The update object containing the message.
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
     """
-    index = get_index()
+    index: Index = get_index()
     vectorstore = get_vectorstore(index)
     chat: ChatOpenAI = get_chat_model()
     messages: List[BaseMessage] = get_base_messages()
-    
+
     # Ignore the message if the bot is in a group but not tagged
     if in_group_not_tagged(update, context):
         return
 
     user_input = update.message.text
-    if update.message.chat.type in ['group', 'supergroup']:
-        if f'@{context.bot.username}' not in user_input:
-            return
 
     db = next(get_db())
 
     user_id = update.message.from_user.id
-    group_id = update.message.chat.id if update.message.chat.type in ['group', 'supergroup'] else None
+    group_id = update.message.chat.id if update.message.chat.type in [
+        'group', 'supergroup'] else None
     is_group = update.message.chat.type in ['group', 'supergroup']
 
     save_message(db, user_id, group_id, False, user_input, is_group)
 
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
-    answer = get_answer(user_input, chat, vectorstore, messages, user_id, group_id, db)
+    answer = get_answer(user_input, chat, vectorstore,
+                        messages, user_id, group_id, db)
     save_message(db, user_id, group_id, True, answer, is_group)
     await update.message.reply_text(answer)
 
@@ -74,12 +74,12 @@ async def update_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     user_input = update.message.text
     username = update.message.chat.username
-    
+
     if len(user_input.split()) < 2:
         await update.message.reply_text('Пожалуйста, предоставьте текст после команды /upd.')
         return
-    
-    index = get_index()
+
+    index: Index = get_index()
     print("Updating with text info...")
     await update.message.reply_text('Обновление получено. Обновление базы знаний...')
     update_text = user_input[4:]
@@ -102,7 +102,8 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     file_name = update.message.document.file_name
-    file_type = os.path.splitext(file_name)[1][1:]  # Get file extension without the dot
+    # Get file extension without the dot
+    file_type = os.path.splitext(file_name)[1][1:]
     print(f"Received file: {file_name}")
     if update.message.document:
         # Check file format
@@ -120,11 +121,12 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             print(f"Файл сохранен как {file_path}")
             db = next(get_db())
             user_id = update.message.from_user.id
-            group_id = update.message.chat.id if update.message.chat.type in ['group', 'supergroup'] else None
+            group_id = update.message.chat.id if update.message.chat.type in [
+                'group', 'supergroup'] else None
             is_group = update.message.chat.type in ['group', 'supergroup']
             print(f"filename {file_name}")
             print(f"filetype {file_type}")
-            save_message(db, user_id, group_id, is_bot=False, message_content=f"File uploaded: {file_name}", 
+            save_message(db, user_id, group_id, is_bot=False, message_content=f"File uploaded: {file_name}",
                          is_group=is_group, file_name=file_name, file_type=file_type)
 
             await update.message.reply_text(f'Файл сохранен. Обновление базы знаний...')
@@ -136,7 +138,7 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update_knowledge_base(file_path)
         await update.message.reply_text('База знаний успешно обновлена!')
 
-# Temporary function
+
 async def get_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handler for the /history command. Retrieves and displays chat history.
@@ -150,10 +152,11 @@ async def get_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
 
     db = next(get_db())
-    
+
     user_id = update.message.from_user.id
-    group_id = update.message.chat.id if update.message.chat.type in ['group', 'supergroup'] else None
-    
+    group_id = update.message.chat.id if update.message.chat.type in [
+        'group', 'supergroup'] else None
+
     try:
         if group_id:
             history = get_chat_history(db, group_id=group_id)

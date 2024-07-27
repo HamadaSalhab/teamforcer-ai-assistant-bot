@@ -3,12 +3,13 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 from model.embeddings import get_embeddings_model
+from pinecone.data.index import Index
 
 # Initialize the embeddings model
 embeddings_model = get_embeddings_model()
 
 
-def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
+def train_tabular_data(data: pd.DataFrame, index: Index, batch_size: int =200) -> None:
     """
     Trains the vector store with tabular data by embedding and uploading the data in batches.
 
@@ -30,7 +31,7 @@ def train_tabular_data(data: pd.DataFrame, index, batch_size=200):
                      'text': x.iloc[1]} for _, x in batch.iterrows()]
         index.upsert(vectors=zip(ids, embeds, metadata))
 
-def train_textual_data(text_list: List[str], index):
+def train_textual_data(text_list: List[str], index: Index) -> None:
     """
     Trains the vector store with textual data by embedding and uploading the data.
 

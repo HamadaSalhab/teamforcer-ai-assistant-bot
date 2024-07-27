@@ -6,7 +6,8 @@ from handlers.command_handlers import start, help_command, stats_command, button
 from config import TELEGRAM_BOT_TOKEN
 import asyncio
 
-def setup_telegram_bot():
+
+def setup_telegram_bot() -> Bot:
     """
     Setup and initialize the Telegram bot with the specified token and handlers.
 
@@ -14,8 +15,8 @@ def setup_telegram_bot():
         bot: The initialized Telegram bot application.
     """
     # Create a new application instance for the bot
-    bot = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-
+    bot: Bot = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    print(type(bot))
     # Register command handlers
     bot.add_handler(CommandHandler("start", start))
     bot.add_handler(CommandHandler("help", help_command))
@@ -34,7 +35,7 @@ def setup_telegram_bot():
     return bot
 
 
-async def set_commands(bot: Bot):
+async def set_commands(bot: Bot) -> None:
     """
     Sets the commands list of the bot and to show them when typing a slash "/"
 
