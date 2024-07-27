@@ -3,6 +3,9 @@
 from sqlalchemy.orm import Session
 from .models import ChatHistory, SessionLocal
 from datetime import datetime
+# from .models import Base
+# from config import DATABASE_URL
+# from sqlalchemy import create_engine, inspect, text
 
 def get_db():
     db: Session = SessionLocal()
