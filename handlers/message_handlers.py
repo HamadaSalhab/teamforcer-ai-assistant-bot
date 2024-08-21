@@ -171,7 +171,7 @@ async def get_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         history_text = f"Chat history for {context_text}:\n\n"
         for msg in history:
-            sender = "User" if msg.user_id == user_id else "Bot"
+            sender = "Bot" if msg.is_bot else "User"
             history_text += f"{sender}: {msg.message_content}\n"
 
         # If the message is too long, split it into multiple messages
