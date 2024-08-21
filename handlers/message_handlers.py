@@ -97,7 +97,7 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context (ContextTypes.DEFAULT_TYPE): The context object for the bot.
     """
 
-    if not is_authorized(update):
+    if not is_authorized(update.message.from_user.username):
         await update.message.reply_text(NOT_AUTHORIZED_MESSAGE)
         return
 

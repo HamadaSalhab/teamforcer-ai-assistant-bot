@@ -25,9 +25,7 @@ def in_group_not_tagged(update: Update, context: ContextTypes.DEFAULT_TYPE) -> b
     return False
 
 
-def is_authorized(update: Update):
-    username = update.message.from_user.username
-
+def is_authorized(username: str):
     return username in AUTHORIZED_USERNAMES
 
 
