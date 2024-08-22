@@ -11,14 +11,14 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-class ChatHistory(Base):
+class Message(Base):
     __tablename__ = 'chat_history'
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(BigInteger, index=True)
     group_id = Column(BigInteger, index=True, nullable=True)
     timestamp = Column(TIMESTAMP, server_default=func.now(), index=True)
-    message_content = Column(Text)
+    content = Column(Text)
     is_bot = Column(Boolean)
     is_group = Column(Boolean)
     file_name = Column(String, nullable=True)

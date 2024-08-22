@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 from datetime import datetime
 from config import AUTHORIZED_USERNAMES
-from storage.sqlalchemy_database import get_db, ChatHistory
+from storage.sqlalchemy_database import get_db, Message
 from sqlalchemy import func, case
 
 NOT_AUTHORIZED_MESSAGE = 'Извините. Вам не разрешено использовать эту команду.'
@@ -57,12 +57,13 @@ def get_stats_by_date(date: str):
     """
     db = next(get_db())
     user_stats = db.query(
-        ChatHistory.user_id,
-        func.count(ChatHistory.id).label('request_count'),
-        func.sum(case((ChatHistory.file_name.isnot(None), 1), else_=0)).label('file_count')
+        Message.user_id,
+        func.count(Message.id).label('request_count'),
+        func.sum(case((Message.file_name.isnot(None), 1), else_=0)
+                 ).label('file_count')
     ).filter(
-        func.date(ChatHistory.timestamp) == date
-    ).group_by(ChatHistory.user_id).all()
+        func.date(Message.timestamp) == date
+    ).group_by(Message.user_id).all()
     
     # Convert the result to a list of dictionaries
     result = [

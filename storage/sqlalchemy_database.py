@@ -1,7 +1,8 @@
 # storage/sqlalchemy_database.py
 
+from typing import List
 from sqlalchemy.orm import Session
-from .models import ChatHistory, SessionLocal
+from .models import Message, SessionLocal
 from datetime import datetime
 # from .models import Base
 # from config import DATABASE_URL
@@ -34,12 +35,12 @@ def get_db():
 #     columns = [column['name'] for column in inspector.get_columns('chat_history')]
 #     print("New schema columns for 'chat_history':", columns)
 
-def save_message(db: Session, user_id: int, group_id: int, is_bot: bool, message_content: str, is_group: bool, file_name: str = None, file_type: str = None):  
+def save_message(db: Session, user_id: int, group_id: int, is_bot: bool, content: str, is_group: bool, file_name: str = None, file_type: str = None):  
     current_time = datetime.utcnow()  # Get current UTC time
-    db_message = ChatHistory(
+    db_message = Message(
         user_id=user_id,
         group_id=group_id,
-        message_content=message_content,
+        content=content,
         is_group=is_group,
         is_bot=is_bot,
         timestamp=current_time,
@@ -52,13 +53,14 @@ def save_message(db: Session, user_id: int, group_id: int, is_bot: bool, message
 
     print(f"Saved message: user_id={db_message.user_id}, group_id={db_message.group_id}, "
           f"timestamp={db_message.timestamp}, is_group={db_message.is_group}, "
-          f"content='{message_content}', file_name='{file_name}', file_type='{file_type}'")
+          f"content='{content}', file_name='{file_name}', file_type='{file_type}'")
     return db_message
 
-def get_chat_history(db: Session, user_id: int = None, group_id: int = None) -> ChatHistory:
+
+def get_chat_history(db: Session, user_id: int = None, group_id: int = None) -> List[Message]:
     if group_id:
-        return db.query(ChatHistory).filter(ChatHistory.group_id == group_id).order_by(ChatHistory.timestamp).all()
+        return db.query(Message).filter(Message.group_id == group_id).order_by(Message.timestamp).all()
     elif user_id:
-        return db.query(ChatHistory).filter(ChatHistory.user_id == user_id).order_by(ChatHistory.timestamp).all()
+        return db.query(Message).filter(Message.user_id == user_id).order_by(Message.timestamp).all()
     else:
-        return db.query(ChatHistory).order_by(ChatHistory.timestamp).all()
+        return db.query(Message).order_by(Message.timestamp).all()

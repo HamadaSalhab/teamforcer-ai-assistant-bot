@@ -48,9 +48,9 @@ def get_answer(query: str, chat: ChatOpenAI, vectorstore: PineconeVectorStore, m
     chat_history = get_chat_history(db, user_id, group_id)
 
     # Add all chat history to messages
-    for history_item in chat_history:
-        messages.append(AIMessage(content=history_item.message_content)
-                        if history_item.is_bot else HumanMessage(content=history_item.message_content))
+    for message in chat_history:
+        messages.append(AIMessage(content=message.content)
+                        if message.is_bot else HumanMessage(content=message.content))
 
     # Augment prompt with vector store data
     augmented_prompt = augment_prompt(query, vectorstore)

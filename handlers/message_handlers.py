@@ -126,7 +126,7 @@ async def update_with_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
             is_group = update.message.chat.type in ['group', 'supergroup']
             print(f"filename {file_name}")
             print(f"filetype {file_type}")
-            save_message(db, user_id, group_id, is_bot=False, message_content=f"File uploaded: {file_name}",
+            save_message(db, user_id, group_id, is_bot=False, content=f"File uploaded: {file_name}",
                          is_group=is_group, file_name=file_name, file_type=file_type)
 
             await update.message.reply_text(f'Файл сохранен. Обновление базы знаний...')
@@ -172,7 +172,7 @@ async def get_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         history_text = f"Chat history for {context_text}:\n\n"
         for msg in history:
             sender = "Bot" if msg.is_bot else "User"
-            history_text += f"{sender}: {msg.message_content}\n"
+            history_text += f"{sender}: {msg.content}\n"
 
         # If the message is too long, split it into multiple messages
         if len(history_text) > 4096:
